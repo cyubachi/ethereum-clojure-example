@@ -52,12 +52,40 @@ contract carsensor {
         }
     }
     
+    function removeEnquiry(address addr, uint index) {
+        Dealer dealer = dealers[addr];
+        for (uint i = index ; i < dealer.enquiries.length-1; i++) {
+            dealer.enquiries[i] = dealer.enquiries[i+1];
+        }
+        delete dealer.enquiries[dealer.enquiries.length-1];
+        dealer.enquiryCount = dealer.enquiries.length;
+        dealers[addr] = dealer;
+    }
+    
+    function sendPendingEnquiries(address dealerAddress) {
+        Dealer admin = dealers[rAddress];
+        Dealer dealer = dealers[dealerAddress];
+        
+        for(uint i = 0; i < admin.enquiries.length; i++) {
+            if (admin.enquiries[i].to == dealerAddress) {
+                dealer.enquiries.push(admin.enquiries[i]);
+                dealer.enquiryCount = dealer.enquiries.length;
+                removeEnquiry(rAddress, i);
+                i--;
+            }
+        }
+        
+        dealers[rAddress] = admin;
+        dealers[dealerAddress] = dealer;
+    }
+
     function () payable {
         Dealer dealer = dealers[msg.sender];
         if (msg.value < 10000000000000000) {
            throw;
         }
         dealer.isPayed = true;
+        sendPendingEnquiries(msg.sender);
         dealers[msg.sender] = dealer;
     }
     
@@ -74,3 +102,4 @@ contract carsensor {
     }
 
 }
+

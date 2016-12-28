@@ -69,7 +69,9 @@
                     ;; Dealer2  0x56fcc45350aaf6abbb555ee32cc4324f25485e32
                     ;; Customer 0xabc24d2e0db6b3b1b548488d6d4d4264e652bc11
 
-                    :address "0xb60de77197be8434d230790a72881500565d598e"
+                    ;; :address "0xb60de77197be8434d230790a72881500565d598e"
+                    ;; :address "0x9015fe7338a4f2dfa7f066348e8e13b3fbcf51b4"
+                    :address "0x84a9241efd3203cc399b3c9c3e6dc75dd1b2d1a4"
                     ;; :address  "0x717579347713f18c2e874b2679bb48625626a554"
                     ;; :address  "0xa330C8Ca0e63e95ec56012aF375EDc24999b4c00"
                     }
