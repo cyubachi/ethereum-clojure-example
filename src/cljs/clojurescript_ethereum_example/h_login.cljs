@@ -14,7 +14,7 @@
    [goog.string :as gstring]
    [goog.string.format]
    [madvas.re-frame.web3-fx]
-   [hodgepodge.core :refer [session-storage remove-item]]
+   [hodgepodge.core :refer [session-storage set-item remove-item]]
    [re-frame.core :refer [reg-event-db reg-event-fx path trim-v after debug reg-fx console dispatch]]
    [clojurescript-ethereum-example.utils :as u]
    )
@@ -22,6 +22,11 @@
 
 (def interceptors [#_(when ^boolean js/goog.DEBUG debug)
                    trim-v])
+
+(defn enter-password
+  [callback]
+  (let [pw (js/prompt "Please Enter Password" "password")]
+    (callback nil pw)))
 
 (reg-event-db
  :ui/cAddrUpdate
@@ -41,15 +46,50 @@
  (fn [db [x]]
    (assoc-in db [:login :password] x)))
 
-(reg-event-db
+(reg-event-fx
  :ui/login
  interceptors
- (fn [db [user]]
-   (console :log "type:" (:type user))
-   (-> db
-       (assoc-in [:login :name] (:name user))
-       (assoc :type (:type user))
-       (assoc :page 0))))
+ (fn [{:keys [db]}]
+   (let [login (:login db)]
+     (console :log ":ui/login db:" (clj->js db))
+     {:db         db
+      :http-xhrio {:method          :post
+                   :uri             "/login"
+                   :timeout         6000
+                   :format          (ajax/transit-request-format)
+                   :params          {:email    (:email login)
+                                     :password (:password login)}
+                   :response-format (ajax/json-response-format {:keywords? true})
+                   :on-success      [:ui/logined]
+                   :on-failure      [:log-error]}})))
+
+(reg-event-fx
+ :ui/logined
+ interceptors
+ (fn [{:keys [db]} [{success :success user :user}]]
+   (console :log ":ui/logined db:" (clj->js db))
+   (console :log ":ui/logined success:" (clj->js success))
+   (console :log ":ui/logined user:" (clj->js user))
+   (if (true? success)
+     (let [login    (:login db)
+           keystore (.-keystore js/lightwallet)
+           ks       (.deserialize keystore (:keystore user))]
+       (set! (.-passwordProvider ks) enter-password)
+       (set-item session-storage "keystore" (:keystore user))
+       (console :log ":ui/logined password:" (:password login))
+       (set-item session-storage "password" (:password login))
+       (set-item session-storage "type" (:type user))
+       (set-item session-storage "name" (:name user))
+       (dispatch [:ui/web3 ks])
+       (dispatch [:blockchain/my-addresses-loaded])
+       (dispatch [:reload])
+       {:db (-> db
+                (assoc-in [:login :name] (:name user))
+                (assoc :type (:type user))
+                (assoc :page 0))})
+     (do
+       (js/alert "login failed. please check email or password.")
+       {:db db}))))
 
 (reg-event-db
  :ui/logout
@@ -67,6 +107,72 @@
  (fn [db [type]]
    (assoc db :register-type type)))
 
+(reg-event-fx
+ :ui/register-create-vault
+ interceptors
+ (fn [{:keys [db]} [type]]
+   (let [login (:login db)
+         keystore (.-keystore js/lightwallet)
+         keystore-params (clj->js {:password (:password login)})]
+     (console :log ":ui/register-user db:" (clj->js db))
+     (console :log ":ui/register-user type:" type)
+     (dispatch [:ui/register-type type])
+     (.createVault keystore keystore-params #(dispatch [:ui/register-key-from-password %1 %2])))
+   {:db db}))
+
+(reg-event-fx
+ :ui/register-key-from-password
+ interceptors
+ (fn [{:keys [db]} [err ks]]
+   (console :log ":ui/register-key-from-password db:" (clj->js db))
+   (console :log ":ui/register-key-from-password err:" (clj->js err))
+   (console :log ":ui/register-key-from-password ks:" (clj->js ks))
+   (if-not (nil? err) (throw err))
+   (let [login (:login db)]
+     (.keyFromPassword ks (:password login) #(dispatch [:ui/register-init-keystore %1 %2 ks]))
+     {:db db})))
+
+(reg-event-fx
+ :ui/register-init-keystore
+ interceptors
+ (fn [{:keys [db]} [err pw-derived-key ks]]
+   (console :log ":ui/register-init-keystore db:" (clj->js db))
+   (console :log ":ui/register-init-keystore err:" (clj->js err))
+   (console :log ":ui/register-init-keystore pw-derived-key:" pw-derived-key)
+   (let [encrypt-hd-path           "m/0'/0'/1'"
+         hd-derivation-path-params (clj->js {:curve "curve25519", :purpose "asymEncrypt"})
+         login                     (:login db)]
+     (if-not (nil? err) (throw err))
+     (.generateNewAddress ks pw-derived-key 3)
+     (.addHdDerivationPath ks encrypt-hd-path pw-derived-key hd-derivation-path-params)
+     (.generateNewEncryptionKeys ks pw-derived-key 1 encrypt-hd-path)
+     (console :log ":ui/register-init-keystore keystore addresses:" (.getAddresses ks))
+     (console :log ":ui/register-init-keystore serialized keystore:" (.serialize ks))
+     (console :log ":ui/register-init-keystore public key:" (first (.getPubKeys ks encrypt-hd-path)))
+     (set! (.-passwordProvider ks) enter-password)
+     {:db         db
+      :http-xhrio {:method          :post
+                   :uri             "/register"
+                   :timeout         6000
+                   :format          (ajax/transit-request-format)
+                   :params          {:email    (:email login)
+                                     :password (:password login)
+                                     :keystore (.serialize ks)
+                                     :pubkey   (first (.getPubKeys ks "m/0'/0'/1'"))
+                                     :type     (:register-type db)
+                                     :name     (first (clojure.string/split (:email login) "@"))
+                                     :address  (str "0x" (first (.getAddresses ks)))}
+                   :response-format (ajax/json-response-format {:keywords? true})
+                   :on-success      [:ui/registered]
+                   :on-failure      [:log-error]}})))
+
+(reg-event-fx
+ :ui/registered
+ interceptors
+ (fn [{:keys [db]} [res]]
+   (console :log ":ui/registered db:" (clj->js db))
+   (console :log ":ui/registered res:" (clj->js res))
+   {:db db}))
 
 (reg-event-db
  :ui/web3
@@ -83,4 +189,4 @@
          (assoc :keystore ks)
          (assoc :my-addresses addresses)
          (assoc :web3 web3)
-         (assoc :provides-web3? true)))) )
+         (assoc :provides-web3? true)))))

@@ -93,9 +93,6 @@
                                encrypted-message (.multiEncryptString encryption ks pw-derived-key message my-pubkey (clj->js [dealer-pubkey]) encrypt-hd-path)]
                            (console :log "encrypted-message:" encrypted-message)
                            (dispatch [:enquiry/send-encrypt-message from to encrypted-message]))))
-     ;; a json with id.. would be a encrypted sencente. 
-     ;; (console :log "sending data:" strClj "->"  strEnc)
-     ;; after sending it as Tx, "(assoc-in [:enquery :text] nil)" should be done in confirmed callback.
      {:db (assoc-in db [:enquiry :open] false)})))
 
 (reg-event-db
