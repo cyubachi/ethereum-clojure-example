@@ -28,6 +28,7 @@
                  [ring-transit "0.1.6"]
                  [ring/ring-defaults "0.3.0-beta1"]
                  [ring/ring-devel "1.6.0-beta5"]
+                 [com.jakemccrary/reload "0.1.0"]
                  [io.github.theasp/simple-encryption "0.1.0"
                   :exclusions [com.taoensso/timbre]]
                  [com.taoensso/timbre "4.7.4"]

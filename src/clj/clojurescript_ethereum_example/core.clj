@@ -7,6 +7,7 @@
             [ring.middleware.logger :refer [wrap-with-logger]]
             [ring.middleware.json :refer [wrap-json-params]]
             [ring.middleware.transit :refer [wrap-transit-params]]
+            [com.jakemccrary.middleware.reload :as reload]
             [environ.core :refer [env]]
             [cheshire.core :as json]
             [org.httpkit.server :refer [run-server]]
@@ -139,7 +140,7 @@
   
   (GET "/js/*" _
        {:status 404})
-  
+
   (GET "/" _
        {:status  200
         :headers {"Content-Type" "text/html; charset=utf-8"}
@@ -148,6 +149,7 @@
 (def http-handler
   (-> routes
       ;; (wrap-defaults site-defaults)
+      reload/wrap-reload
       (wrap-defaults (assoc-in site-defaults [:security :anti-forgery] false))
       wrap-with-logger
       wrap-json-params
