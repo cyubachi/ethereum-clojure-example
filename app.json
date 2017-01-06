@@ -1,0 +1,7 @@
+{
+    "name": "Clojure Ethereum Sample",
+    "description": "A Sample Ethereum app written in Clojure",
+    "repository": "https://github.com/cyubachi/ethereum-clojure-example/tree/develop",
+    "logo": "https://www.curicle.jp/wp-content/themes/curicle2016/img/logo.png",
+    "keywords": ["clojure", "clojurescript", "blockchain", "ethereum"]
+}
