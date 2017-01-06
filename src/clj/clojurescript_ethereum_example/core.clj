@@ -8,6 +8,7 @@
             [ring.middleware.json :refer [wrap-json-params]]
             [ring.middleware.transit :refer [wrap-transit-params]]
             [com.jakemccrary.middleware.reload :as reload]
+            [ring.logger.timbre :as logger.timbre]
             [environ.core :refer [env]]
             [cheshire.core :as json]
             [org.httpkit.server :refer [run-server]]
@@ -150,6 +151,7 @@
   (-> routes
       ;; (wrap-defaults site-defaults)
       reload/wrap-reload
+      logger.timbre/wrap-with-logger
       (wrap-defaults (assoc-in site-defaults [:security :anti-forgery] false))
       wrap-with-logger
       wrap-json-params
