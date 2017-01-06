@@ -10,6 +10,12 @@
             [environ.core :refer [env]]
             [cheshire.core :as json]
             [org.httpkit.server :refer [run-server]])
+  (:import org.web3j.protocol.Web3j
+           org.web3j.protocol.infura.InfuraHttpService
+           org.web3j.crypto.Credentials
+           org.web3j.utils.Numeric
+           org.web3j.abi.Transfer
+           java.math.BigDecimal)
   (:gen-class))
 
 (def ^:dynamic *server*)
@@ -120,7 +126,23 @@
       (wrap-transit-params {:opts{}})
       wrap-gzip))
 
+(defn- sendFund [toAddr etherVal]
+  (let [conn (InfuraHttpService. (str "https://ropsten.infura.io/" (env :infuraiokey)))
+        web3j (Web3j/build conn)
+        cred (Credentials/create (env :senderprivkey))]
+    (println "clientVer: " (.getWeb3ClientVersion (.send (.web3ClientVersion web3j))))
+    (println "senderAdr: " (.getAddress cred))
+    (let [x  (Transfer/sendFundsAsync web3j cred toAddr
+                                      (BigDecimal/valueOf etherVal)
+                                      (org.web3j.utils.Convert$Unit/ETHER) )]
+      (println "Transfer: " x)
+      )
+    )
+  )
+
 (defn -main [& [port]]
+  (sendFund "0x39c4B70174041AB054f7CDb188d270Cc56D90da8" 0.000402)
+  
   (let [port (Integer. (or port (env :port) 6655))]
     (alter-var-root (var *server*)
                     (constantly (run-server http-handler {:port port :join? false})))))
