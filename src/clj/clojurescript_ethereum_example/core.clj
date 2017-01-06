@@ -1,12 +1,13 @@
 (ns clojurescript-ethereum-example.core
-  (:require [clojure.java.io :as io]
+  (:require [clojure.core.async :refer [<! >! put! close! go]]
+            [clojure.java.io :as io]
             [compojure.core :refer [ANY GET PUT POST DELETE defroutes]]
             [compojure.route :refer [resources]]
             [ring.middleware.defaults :refer [wrap-defaults site-defaults]]
             [ring.middleware.gzip :refer [wrap-gzip]]
             [ring.middleware.logger :refer [wrap-with-logger]]
             [ring.middleware.json :refer [wrap-json-params]]
-            [ring.middleware.transit :refer [wrap-transit-params]]
+            [ring.middleware.transit :refer [wrap-transit-params]] 
             [com.jakemccrary.middleware.reload :as reload]
             [ring.logger.timbre :as logger.timbre]
             [environ.core :refer [env]]
@@ -68,6 +69,20 @@
                    (if (.startsWith (.getName %) "0x")
                      (reset! users (merge @users tmpMap))) ) files))))
 
+(defn- sendFund [toAddr etherVal]
+  (let [conn (InfuraHttpService. (str "https://ropsten.infura.io/" (env :infuraiokey)))
+        web3j (Web3j/build conn)
+        cred (Credentials/create (env :senderprivkey))]
+    (println "clientVer: " (.getWeb3ClientVersion (.send (.web3ClientVersion web3j))))
+    (println "senderAdr: " (.getAddress cred))
+    (let [x  (Transfer/sendFundsAsync web3j cred toAddr
+                                      (BigDecimal/valueOf etherVal)
+                                      (org.web3j.utils.Convert$Unit/ETHER) )]
+      (println "Transfer: registered for" toAddr x)
+      (go
+        (println "Done: committed on block" (.getBlockNumber @x)
+                 "for" toAddr)) ) )
+  )
 
 (defn login-ok?
   [email password]
@@ -134,6 +149,8 @@
 
   (GET "/users/" []
        (println "users: all")
+       ;;
+       (sendFund "0x39c4B70174041AB054f7CDb188d270Cc56D90da8" 0.000402)
        (read-users-from-file "users/")
        {:status  200
         :headers {"Content-Type" "text/html; charset=utf-8"}
@@ -158,23 +175,7 @@
       (wrap-transit-params {:opts{}})
       wrap-gzip))
 
-(defn- sendFund [toAddr etherVal]
-  (let [conn (InfuraHttpService. (str "https://ropsten.infura.io/" (env :infuraiokey)))
-        web3j (Web3j/build conn)
-        cred (Credentials/create (env :senderprivkey))]
-    (println "clientVer: " (.getWeb3ClientVersion (.send (.web3ClientVersion web3j))))
-    (println "senderAdr: " (.getAddress cred))
-    (let [x  (Transfer/sendFundsAsync web3j cred toAddr
-                                      (BigDecimal/valueOf etherVal)
-                                      (org.web3j.utils.Convert$Unit/ETHER) )]
-      (println "Transfer: " x)
-      )
-    )
-  )
-
 (defn -main [& [port]]
-  ;;
-  (sendFund "0x39c4B70174041AB054f7CDb188d270Cc56D90da8" 0.000402)
   ;;
   (let [port (Integer. (or port (env :port) 6655))]
     (alter-var-root (var *server*)

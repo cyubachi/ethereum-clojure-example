@@ -18,12 +18,14 @@
                  [medley "0.8.3"]
                  [org.clojure/clojure "1.8.0"]
                  [org.clojure/clojurescript "1.9.229"]
+                 [org.clojure/core.async "0.2.395"]
                  [print-foo-cljs "2.0.3"]
                  [re-frame "0.8.0"]
                  [reagent "0.6.0"
                   :exclusions [cljsjs/react]]
                  [ring.middleware.logger "0.5.0"]
-                 [ring/ring-core "1.6.0-beta5"]
+                 [ring/ring-core "1.6.0-beta5"
+                  :exclusions [commons-codec]]
                  [ring/ring-json "0.4.0"]
                  [ring-transit "0.1.6"]
                  [ring/ring-defaults "0.3.0-beta1"]
