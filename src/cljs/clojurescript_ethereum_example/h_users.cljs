@@ -40,7 +40,32 @@
  :dev/set-users
  interceptors
  (fn [db [res]]
-   (let [result (js->clj res)]
-     (console :log "hendler:dev/set-users" result)
+   (let [result (js->clj res) ;; ":keywordize-keys true"
+         addresses (into [] (map #(:address %) result))]
+     (console :log "hendler:dev/set-users" result addresses)
+     (if (not (nil? (:web3 db)))
+       (dispatch [:dev/get-balances addresses]) )
      (assoc-in db [:users] result)))
  )
+
+(reg-event-fx
+ :dev/get-balances
+ interceptors
+ (fn [{:keys [db]} [x]]
+   (console :log "get-balances: " x)
+   {;; :db (-> db
+    ;;         (assoc-in [:balances :address] (first (:my-addresses db))))
+    :web3-fx.blockchain/balances
+    {:web3                   (:web3 db)
+     :addresses              x
+     :watch?                 true
+     :blockchain-filter-opts "latest"
+     :dispatches             [:dev/set-balances :log-error]}}))
+
+(reg-event-db
+ :dev/set-balances
+ interceptors
+ (fn [db [bbalance address]]
+   (let [balance (js/parseFloat (str (web3/from-wei bbalance :ether)))]
+     (console :log "set-balances:" address balance)
+     (assoc-in db [:balances address] balance))))

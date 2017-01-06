@@ -1,7 +1,7 @@
 (ns clojurescript-ethereum-example.subs
   (:require
    [clojure.string :as str]
-   [re-frame.core :refer [reg-sub]]
+   [re-frame.core :refer [reg-sub console]]
    ) ) 
 
 (reg-sub
@@ -114,4 +114,9 @@
 (reg-sub
  :db/users
  (fn [db]
-   (:users db)))
+   (let [users (:users db)]
+     ;;(console :log "xxx:" users)
+     (map #(assoc-in % [:balance] (get-in db [:balances (:address %)])) users)
+     
+     )
+   ))

@@ -5,7 +5,10 @@
    [reagent.core :as r]
    [cljs-react-material-ui.reagent :as ui]
    [cljs-react-material-ui.core :refer [get-mui-theme color]]
-   [clojurescript-ethereum-example.utils :as u]))
+   [clojurescript-ethereum-example.utils :as u]
+   [goog.string :as gstring]
+   [goog.string.format]
+   ))
 
 (def col (r/adapt-react-class js/ReactFlexboxGrid.Col))
 (def row (r/adapt-react-class js/ReactFlexboxGrid.Row))
@@ -31,7 +34,7 @@
         [ui/table-row
          [ui/table-header-column {:style {:text-align "center"}} "email"]
          [ui/table-header-column {:style {:text-align "center"}} "name"]
-         ;;[ui/table-header-column {:style {:text-align "center"}} "role"]
+         [ui/table-header-column {:style {:text-align "center"}} "balance"]
          [ui/table-header-column {:style {:text-align "center"}} "address"] 
          ]        
         )]
@@ -43,8 +46,10 @@
                         (:email x)]
                        [ui/table-row-column ;;{:style {:font-family ["Lekton" "monospace"]}}
                         (:name x)]
-                       ;; [ui/table-row-column ;;{:style {:text-align "center" :font-color "black"}}
-                       ;;  (:type x)]
+                       [ui/table-row-column ;;{:style {:font-family ["Lekton" "monospace"]}}
+                        (if (nil? (:balance x))
+                          "-"
+                          (gstring/format "%.8f" (:balance x)))]
                        [ui/table-row-column {:style {:font-family ["Lekton" "monospace"]}}
                         (mkAHref  "https://testnet.etherscan.io/address/" (:address x))
                         ]
