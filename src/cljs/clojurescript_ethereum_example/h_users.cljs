@@ -67,5 +67,28 @@
  interceptors
  (fn [db [bbalance address]]
    (let [balance (js/parseFloat (str (web3/from-wei bbalance :ether)))]
+     (dispatch [:dev/get-dealerinfo address])     
      (console :log "set-balances:" address balance)
-     (assoc-in db [:balances address] balance))))
+     (assoc-in db [:users-balances address] balance))))
+
+(reg-event-db
+ :dev/get-dealerinfo
+ interceptors
+ (fn [db [address]]
+   (console :log "get-dealerinfo:" address)
+   (.getDealer (get-in db [:contract :instance])
+               address
+               (fn [err [cntb name addr paid pvalb]]
+                 (let [cnt (js/parseFloat (str (web3/from-wei cntb :ether)))
+                       pval (js/parseFloat (str (web3/from-wei pvalb :ether)))]
+                   (dispatch [:dev/set-dealerinfo addr paid pval]) )))
+   db))
+
+(reg-event-db
+ :dev/set-dealerinfo
+ interceptors
+ (fn [db [address paid pval]]
+   (console :log address "-->" paid pval)
+   (assoc-in db [:users-status address] {:paid paid
+                                         :pval pval})
+   ) )

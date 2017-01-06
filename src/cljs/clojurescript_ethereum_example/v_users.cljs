@@ -35,7 +35,8 @@
          [ui/table-header-column {:style {:text-align "center"}} "email"]
          [ui/table-header-column {:style {:text-align "center"}} "name"]
          [ui/table-header-column {:style {:text-align "center"}} "balance"]
-         [ui/table-header-column {:style {:text-align "center"}} "address"] 
+         [ui/table-header-column {:style {:text-align "center"}} "address"]
+         [ui/table-header-column {:style {:text-align "center"}} "paid (To RTC)"]
          ]        
         )]
      [ui/table-body {:display-row-checkbox false}
@@ -46,13 +47,16 @@
                         (:email x)]
                        [ui/table-row-column ;;{:style {:font-family ["Lekton" "monospace"]}}
                         (:name x)]
-                       [ui/table-row-column ;;{:style {:font-family ["Lekton" "monospace"]}}
+                       [ui/table-row-column {:style {:text-align "center"}}
                         (if (nil? (:balance x))
                           "-"
                           (gstring/format "%.8f" (:balance x)))]
                        [ui/table-row-column {:style {:font-family ["Lekton" "monospace"]}}
-                        (mkAHref  "https://testnet.etherscan.io/address/" (:address x))
-                        ]
+                        (mkAHref  "https://testnet.etherscan.io/address/" (:address x))]
+                       [ui/table-row-column {:style {:text-align "center"}}
+                        (if (:paid x)
+                          "YES"
+                          "NO") ]
                        ]
                       )
                     data))

@@ -116,7 +116,9 @@
  (fn [db]
    (let [users (:users db)]
      ;;(console :log "xxx:" users)
-     (map #(assoc-in % [:balance] (get-in db [:balances (:address %)])) users)
-     
+     (map #(-> %
+               (assoc-in [:balance] (get-in db [:users-balances (:address %)]))
+               (assoc-in [:paid] (get-in db [:users-status (:address %) :paid]))
+               ) users)
      )
    ))
