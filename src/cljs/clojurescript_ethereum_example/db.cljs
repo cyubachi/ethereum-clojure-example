@@ -9,7 +9,10 @@
 
 (def keystore (.-keystore js/lightwallet))
 (def deserialized-ks (if-not (nil? serialized-ks)
-                       (.deserialize keystore serialized-ks)
+                       (let [ks (.deserialize keystore serialized-ks)
+                             pw (get-item session-storage "password")]
+                         (set! (.-passwordProvider ks) #(%1 nil pw))
+                         ks)
                        nil))
 (defn logined?
   []

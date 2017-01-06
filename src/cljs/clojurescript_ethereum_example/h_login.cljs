@@ -74,7 +74,7 @@
      (let [login    (:login db)
            keystore (.-keystore js/lightwallet)
            ks       (.deserialize keystore (:keystore user))]
-       (set! (.-passwordProvider ks) enter-password)
+       (set! (.-passwordProvider ks) #(%1 nil (:password login)))
        (set-item session-storage "keystore" (:keystore user))
        (console :log ":ui/logined password:" (:password login))
        (set-item session-storage "password" (:password login))
