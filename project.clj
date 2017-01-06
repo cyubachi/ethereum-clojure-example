@@ -35,6 +35,8 @@
                  [hodgepodge "0.1.3"]
                  ;;
                  [org.web3j/core "1.1.0"]
+                 ;;
+                 [me.raynes/fs "1.4.6"]
                  ]
 
   :repositories [["oss.jfrog.org" "http://dl.bintray.com/ethereum/maven"]]

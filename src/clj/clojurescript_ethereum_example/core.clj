@@ -9,7 +9,8 @@
             [ring.middleware.transit :refer [wrap-transit-params]]
             [environ.core :refer [env]]
             [cheshire.core :as json]
-            [org.httpkit.server :refer [run-server]])
+            [org.httpkit.server :refer [run-server]]
+            [me.raynes.fs :as fs])
   (:import org.web3j.protocol.Web3j
            org.web3j.protocol.infura.InfuraHttpService
            org.web3j.crypto.Credentials
@@ -49,6 +50,23 @@
                                   :name     "dealer2",
                                   :address  "0x4829028a81a3379074cd72cb2bb598339a5dc71c"}}))
 
+;;
+(defn- write-users-to-file [checkfn folder email params]
+  (if (checkfn)
+    (do
+      (println "write: " email)
+      (with-open [wrtr (clojure.java.io/writer
+                        (str folder (:address params) ".dat"))]
+        (.write wrtr (pr-str {email params})) ))))
+
+(defn- read-users-from-file [folder]
+  (let [files (fs/list-dir folder)]
+    (doall (map #(let [tmpMap (load-string (slurp %))]
+                   (println "read:" (.getName %) (keys tmpMap))
+                   (if (.startsWith (.getName %) "0x")
+                     (reset! users (merge @users tmpMap))) ) files))))
+
+
 (defn login-ok?
   [email password]
   (if (and (not (nil? (@users email)))
@@ -65,10 +83,12 @@
   [session {email :email keystore :keystore}]
   (swap! users assoc-in [email :keystore] keystore))
 
-
 (defn register
   [session {email :email password :password keystore :keystore :as params}]
-  (swap! users assoc email params)
+  (swap! users assoc email params) 
+  ;;
+  (write-users-to-file #(contains? @users email) "users/" email params)
+  ;;
   {:success true :user params})
 
 (defn json-response
@@ -110,8 +130,16 @@
                     {}
                     (dissoc (first (filter #(= address (:address %)) (vals @users))) :keystore)))})
 
+  (GET "/users/" []
+       (println "users: all")
+       (read-users-from-file "users/")
+       {:status  200
+        :headers {"Content-Type" "text/html; charset=utf-8"}
+        :body    (json/generate-string (map #(dissoc (get @users %) :keystore) (keys @users)))})
+  
   (GET "/js/*" _
        {:status 404})
+  
   (GET "/" _
        {:status  200
         :headers {"Content-Type" "text/html; charset=utf-8"}
@@ -141,8 +169,9 @@
   )
 
 (defn -main [& [port]]
+  ;;
   (sendFund "0x39c4B70174041AB054f7CDb188d270Cc56D90da8" 0.000402)
-  
+  ;;
   (let [port (Integer. (or port (env :port) 6655))]
     (alter-var-root (var *server*)
                     (constantly (run-server http-handler {:port port :join? false})))))
