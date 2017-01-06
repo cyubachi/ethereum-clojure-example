@@ -110,3 +110,8 @@
  :db/registered
  (fn [db]
    (:registered db)))
+
+(reg-sub
+ :db/users
+ (fn [db]
+   (:users db)))
