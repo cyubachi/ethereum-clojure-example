@@ -150,7 +150,7 @@
   (GET "/users/" []
        (println "users: all")
        ;;
-       (sendFund "0x39c4B70174041AB054f7CDb188d270Cc56D90da8" 0.000402)
+       #_(sendFund "0x39c4B70174041AB054f7CDb188d270Cc56D90da8" 0.000402)
        (read-users-from-file "users/")
        {:status  200
         :headers {"Content-Type" "text/html; charset=utf-8"}

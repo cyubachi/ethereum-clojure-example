@@ -64,7 +64,7 @@
      ]
     ))
 
-(defn component0 []
+(defn users-component []
   (let [users (subscribe [:db/users])]
     (fn []
       [row 
@@ -80,7 +80,7 @@
          [:div "ADMIN"]
          (mkUserTable "admin" @users)
 
-         [ui/raised-button
+         #_[ui/raised-button
           {:secondary    true
            :label        "GET USERS"
            :style        {:margin-top 15 :margin-left 15}

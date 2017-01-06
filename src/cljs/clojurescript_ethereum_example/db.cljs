@@ -120,9 +120,9 @@
                             ""
                             (get-item session-storage "name"))}
    :keystore   deserialized-ks
-   :type       (if (nil? (get-item session-storage "keystore"))
+   :type       (if (nil? (get-item session-storage "type"))
                  "customer"
-                 (get-item session-storage "keystore"))
+                 (get-item session-storage "type"))
    :payed      false
    :registered false
    :put-dealer {:from nil

@@ -28,9 +28,14 @@
        [ui/menu-item {:onTouchTap #(do
                                      (dispatch [:ui/page 2])
                                      (dispatch [:ui/drawer]))} "list"]
+       (if (= @type "admin")
+         [ui/menu-item {:onTouchTap #(do
+                                       (dispatch [:ui/page 4])
+                                       (dispatch [:dev/get-users])
+                                       (dispatch [:ui/drawer]))} "user list"])
        #_[ui/menu-item {:onTouchTap #(do
-                                     (dispatch [:ui/page 1])
-                                     (dispatch [:ui/drawer]))} "development"]
+                                       (dispatch [:ui/page 1])
+                                       (dispatch [:ui/drawer]))} "development"]
        [ui/menu-item {:onTouchTap #(do
                                      (dispatch [:ui/page 3])
                                      (dispatch [:ui/logout])
@@ -64,6 +69,6 @@
          [v_list/enquiry-component]
          [v_list/list-component]]
         [:div (display @page 3)
-         [v_login/login-component]
-         [v_users/component0]
-         ]]])))
+         [v_login/login-component]]
+        [:div (display @page 4)
+         [v_users/users-component]]]])))
