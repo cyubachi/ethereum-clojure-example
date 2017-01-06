@@ -3,7 +3,6 @@
             [cljs-time.core :refer [date-time to-default-time-zone]]
             [cljs-time.format :as time-format]
             [cljs-web3.core :as web3]
-            [io.github.theasp.simple-encryption :as se]
             [goog.crypt.base64 :as b64]
             [cljs.reader :as reader]
             ))

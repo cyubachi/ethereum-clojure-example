@@ -32,16 +32,11 @@
                  [ring/ring-devel "1.6.0-beta5"]
                  [ring-logger-timbre "0.7.5"]
                  [com.jakemccrary/reload "0.1.0"]
-                 [io.github.theasp/simple-encryption "0.1.0"
-                  :exclusions [com.taoensso/timbre]]
                  [com.taoensso/timbre "4.7.4"]
                  [binaryage/dirac "0.8.6"]
                  [hodgepodge "0.1.3"]
-                 ;;
                  [org.web3j/core "1.1.0"]
-                 ;;
-                 [me.raynes/fs "1.4.6"]
-                 ]
+                 [me.raynes/fs "1.4.6"]]
 
   :repositories [["oss.jfrog.org" "http://dl.bintray.com/ethereum/maven"]]
 
@@ -84,7 +79,7 @@
                                        (require 'dirac.agent)
                                        (dirac.agent/boot!))}}
 
-   :dev [:dev-org :dev-overrides]
+   :dev           [:dev-org :dev-overrides]
    :dev-overrides {:env {:api-keys "test"}}
    :dev-org
    {:dependencies [[binaryage/devtools "0.8.2"]
@@ -111,12 +106,15 @@
    :uberjar {:hooks       [leiningen.cljsbuild]
              :omit-source true
              :aot         :all
-             :main        emojillionaire.core
+             :main        clojurescript-ethereum-example.core
              :cljsbuild   {:builds {:app {:id           "uberjar"
                                           :source-paths ["src/cljs"]
-                                          :compiler     {:main            clojurescript-ethereum-example.core
-                                                         :output-to       "resources/public/js/compiled/app.js"
-                                                         :optimizations   :advanced
-                                                         :closure-defines {goog.DEBUG false}
-                                                         :pretty-print    true
-                                                         :pseudo-names    true}}}}}})
+                                          :compiler     {:main                 clojurescript-ethereum-example.core
+                                                         :output-to            "resources/public/js/compiled/app.js"
+                                                         :output-dir           "resources/public/js/compiled/out"
+                                                         :asset-path           "./js/compiled/out"
+                                                         :source-map-timestamp true
+                                                         :optimizations        :none
+                                                         :closure-defines      {goog.DEBUG true}
+                                                         :pretty-print         true
+                                                         :pseudo-names         true}}}}}})
