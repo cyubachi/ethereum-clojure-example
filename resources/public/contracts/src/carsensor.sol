@@ -42,24 +42,26 @@ contract carsensor {
             dealer = dealers[rAddress];
             e = Enquiry({from: from, to: to, encryptedMessage: message, registerDate: registerDate});
             dealer.enquiries.push(e);
-            dealer.enquiryCount = dealer.enquiries.length;
+            dealer.enquiryCount = dealer.enquiryCount + 1;
             dealers[rAddress] = dealer;
         } else {
             e = Enquiry({from: from, to: to, encryptedMessage: message, registerDate: registerDate});
             dealer.enquiries.push(e);
-            dealer.enquiryCount = dealer.enquiries.length;
+            dealer.enquiryCount = dealer.enquiryCount + 1;
             dealers[to] = dealer;
         }
     }
     
     function removeEnquiry(address addr, uint index) {
         Dealer dealer = dealers[addr];
-        for (uint i = index ; i < dealer.enquiries.length-1; i++) {
-            dealer.enquiries[i] = dealer.enquiries[i+1];
+        if (dealer.enquiryCount > 0) {
+            for (uint i = index ; i < dealer.enquiries.length-1; i++) {
+                dealer.enquiries[i] = dealer.enquiries[i+1];
+            }
+            delete dealer.enquiries[dealer.enquiries.length-1];
+            dealer.enquiryCount = dealer.enquiryCount - 1;
+            dealers[addr] = dealer;
         }
-        delete dealer.enquiries[dealer.enquiries.length-1];
-        dealer.enquiryCount = dealer.enquiries.length;
-        dealers[addr] = dealer;
     }
     
     function sendPendingEnquiries(address dealerAddress) {

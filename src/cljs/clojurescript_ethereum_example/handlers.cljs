@@ -143,7 +143,7 @@
                        :to to
                        :value value
                        :gasPrice (web3-eth/gas-price web3)}
-         gas          (+ (web3-eth/estimate-gas web3 tx) 500000)]
+         gas          (+ (web3-eth/estimate-gas web3 tx) 1500000)]
      (console :log ":publication-fee/pay send transaction:" (clj->js (assoc tx :gas gas)))
      (web3-eth/send-transaction! web3 (assoc tx :gas gas) (fn [err tx]
                                                             (console :log "err:" err)

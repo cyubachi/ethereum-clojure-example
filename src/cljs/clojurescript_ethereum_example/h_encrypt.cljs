@@ -97,12 +97,12 @@
  :decrypt/messages
  interceptors
  (fn [db]
-   (let [tweets     (subscribe [:db/tweets])
-         tweets-num (count @tweets)]
+   (let [tweets     (:tweets db)
+         tweets-num (count tweets)]
      (console :log ":decrypt/message db:" (clj->js db))
-     (console :log ":decrypt/message tweets:" (clj->js @tweets))
+     (console :log ":decrypt/message tweets:" (clj->js tweets))
      (console :log ":decrypt/message tweets-num:" tweets-num)
      (doseq [i (range 0 tweets-num)]
-       (console :log (str "tweets[" i "]")  (clj->js (nth @tweets i)))
-       (dispatch [:server/fetch-key (:from (nth @tweets i)) nil false i]))
+       (console :log (str "tweets[" i "]")  (clj->js (nth tweets i)))
+       (dispatch [:server/fetch-key (:from (nth tweets i)) nil false i]))
      db)))

@@ -85,7 +85,7 @@
    {:dependencies [[binaryage/devtools "0.8.2"]
                    [com.cemerick/piggieback "0.2.1"]
                    [figwheel-sidecar "0.5.8"]
-                   [org.clojure/tools.nrepl "0.2.11"]]
+                   [org.clojure/tools.nrepl "0.2.12"]]
     :plugins      [[lein-figwheel "0.5.8"]
                    [lein-environ "1.1.0"]
                    [cider/cider-nrepl "0.15.0-SNAPSHOT"]
