@@ -54,13 +54,14 @@ contract carsensor {
     
     function removeEnquiry(address addr, uint index) {
         Dealer dealer = dealers[addr];
-        if (dealer.enquiryCount > 0) {
-            for (uint i = index ; i < dealer.enquiries.length-1; i++) {
-                dealer.enquiries[i] = dealer.enquiries[i+1];
+        uint length = dealers[addr].enquiries.length-1;
+        if (dealers[addr].enquiryCount > 0) {
+            for (uint i = index ; i < length; i++) {
+                dealers[addr].enquiries[i] = dealers[addr].enquiries[i+1];
             }
-            delete dealer.enquiries[dealer.enquiries.length-1];
-            dealer.enquiryCount = dealer.enquiryCount - 1;
-            dealers[addr] = dealer;
+            delete dealers[addr].enquiries[length];
+            dealers[addr].enquiries.length = length;
+            dealers[addr].enquiryCount = dealer.enquiryCount - 1;
         }
     }
     
@@ -92,7 +93,8 @@ contract carsensor {
     }
     
     function getDealerEnquiry(address addr, uint index) constant returns (address, address, string, uint) {
-        return (dealers[addr].enquiries[index].from, dealers[addr].enquiries[index].to, dealers[addr].enquiries[index].encryptedMessage, dealers[addr].enquiries[index].registerDate);
+        Dealer memory dealer = dealers[addr];
+        return (dealer.enquiries[index].from, dealer.enquiries[index].to, dealer.enquiries[index].encryptedMessage, dealer.enquiries[index].registerDate);
     }
     
     function getDealer(address addr) constant returns (uint, string, address, bool, uint) {
