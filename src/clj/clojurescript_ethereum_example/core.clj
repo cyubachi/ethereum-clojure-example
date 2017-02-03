@@ -7,7 +7,7 @@
             [ring.middleware.gzip :refer [wrap-gzip]]
             [ring.middleware.logger :refer [wrap-with-logger]]
             [ring.middleware.json :refer [wrap-json-params]]
-            [ring.middleware.transit :refer [wrap-transit-params]] 
+            [ring.middleware.transit :refer [wrap-transit-params]]
             [com.jakemccrary.middleware.reload :as reload]
             [ring.logger.timbre :as logger.timbre]
             [environ.core :refer [env]]
@@ -70,19 +70,25 @@
                      (reset! users (merge @users tmpMap))) ) files))))
 
 (defn- sendFund [toAddr etherVal]
-  (let [conn (InfuraHttpService. (str "https://ropsten.infura.io/" (env :infuraiokey)))
+  (let [conn  (InfuraHttpService. (str "https://ropsten.infura.io/" (env :infuraiokey)))
         web3j (Web3j/build conn)
-        cred (Credentials/create (env :senderprivkey))]
+        cred  (Credentials/create (env :senderprivkey))
+        email (first (for [[k v] @users :when (= toAddr (:address v))] k))]
     (println "clientVer: " (.getWeb3ClientVersion (.send (.web3ClientVersion web3j))))
     (println "senderAdr: " (.getAddress cred))
-    (let [x  (Transfer/sendFundsAsync web3j cred toAddr
-                                      (BigDecimal/valueOf etherVal)
-                                      (org.web3j.utils.Convert$Unit/ETHER) )]
-      (println "Transfer: registered for" toAddr x)
-      (go
-        (println "Done: committed on block" (.getBlockNumber @x)
-                 "for" toAddr)) ) )
-  )
+    (println "email: " email)
+    (if (nil? (get-in @users [email :pendingTransaction]))
+      (let [x     (Transfer/sendFundsAsync web3j cred toAddr
+                                           (BigDecimal/valueOf etherVal)
+                                           (org.web3j.utils.Convert$Unit/ETHER))]
+        (println "Transfer: registered for" toAddr " " (.getTransactionHash @x))
+        (swap! users assoc-in [email :pendingTransaction] (.getTransactionHash @x))
+        (go
+          (println "Done: committed on block" (.getBlockNumber @x)
+                   "for" toAddr)
+          (swap! users assoc-in [email :pendingTransaction] nil))
+        {:success true :message nil})
+      {:success false :message "now waiting transaction."})))
 
 (defn login-ok?
   [email password]
@@ -102,11 +108,15 @@
 
 (defn register
   [session {email :email password :password keystore :keystore :as params}]
-  (swap! users assoc email params) 
+  (swap! users assoc email params)
   ;;
   (write-users-to-file #(contains? @users email) "users/" email params)
   ;;
   {:success true :user params})
+
+(defn send
+  [session {address :address :as params}]
+  (sendFund address 0.1))
 
 (defn json-response
   [body & more]
@@ -126,6 +136,8 @@
 
   (POST "/login" {session :session params :params} (json-response (login session params)))
   (POST "/register" {session :session params :params} (json-response (register session params)))
+
+  (GET "/send" {session :session params :params} (json-response (send session params)))
 
   ;; DEALER KEY
   (GET "/key/:address" [address];; "/dealers/" isnt dealt with.
@@ -155,7 +167,7 @@
        {:status  200
         :headers {"Content-Type" "text/html; charset=utf-8"}
         :body    (json/generate-string (map #(dissoc (get @users %) :keystore) (keys @users)))})
-  
+
   (GET "/js/*" _
        {:status 404})
 

@@ -15,7 +15,7 @@
    [goog.string :as gstring]
    [goog.string.format]
    [madvas.re-frame.web3-fx]
-   [re-frame.core :refer [reg-event-db reg-event-fx path trim-v after debug reg-fx console dispatch]]
+   [re-frame.core :refer [reg-event-db reg-event-fx path trim-v after debug reg-fx console dispatch subscribe]]
    [clojurescript-ethereum-example.utils :as u]
    )
   )
@@ -322,3 +322,31 @@
        (dispatch [:reload])
        (assoc-in db [:page] x))
      (assoc-in db [:page] 3))))
+
+(reg-event-fx
+ :ui/send
+ interceptors
+ (fn [{:keys [db]}]
+   (let [balance (subscribe [:new-tweet/selected-address-balance])
+         payable (> 0.01 (web3/from-wei @balance :ether))]
+     (console :log ":ui/send")
+     (console :log "[:new-tweet :address]: " (get-in db [:new-tweet :address]))
+     (console :log "payable: " payable)
+     (console :log "db:" (clj->js db))
+     (if payable
+       {:http-xhrio {:method          :get
+                     :uri             "/send"
+                     :timeout         100000
+                     :params          {:address (get-in db [:new-tweet :address])}
+                     :response-format (ajax/json-response-format {:keywords? true})
+                     :on-success      [:ui/send-log]
+                     :on-failure      [:log-error]}}
+       {:db db}))))
+
+(reg-event-db
+ :ui/send-log
+ interceptors
+ (fn [db [res]]
+   (let [result (js->clj res)]
+     (console :log "hendler :ui/send-log : " result)
+     db)))

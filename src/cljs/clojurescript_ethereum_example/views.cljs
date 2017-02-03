@@ -24,13 +24,16 @@
        [ui/menu-item {:onTouchTap #(dispatch [:ui/drawer])} "-CLOSE-"]
        [ui/menu-item {:onTouchTap #(do
                                      (dispatch [:ui/page 0])
+                                     (dispatch [:ui/send])
                                      (dispatch [:ui/drawer]))} (if (= @type "customer") "account info" "messages")]
        [ui/menu-item {:onTouchTap #(do
                                      (dispatch [:ui/page 2])
+                                     (dispatch [:ui/send])
                                      (dispatch [:ui/drawer]))} "list"]
        (if (= @type "admin")
          [ui/menu-item {:onTouchTap #(do
                                        (dispatch [:ui/page 4])
+                                       (dispatch [:ui/send])
                                        (dispatch [:dev/get-users])
                                        (dispatch [:ui/drawer]))} "user list"])
        #_[ui/menu-item {:onTouchTap #(do
