@@ -107,6 +107,11 @@
    (:payed db)))
 
 (reg-sub
+ :db/limit
+ (fn [db]
+   (:limit db)))
+
+(reg-sub
  :db/registered
  (fn [db]
    (:registered db)))

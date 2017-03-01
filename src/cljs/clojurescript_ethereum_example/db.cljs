@@ -25,6 +25,9 @@
 ;; (def rpc-url "https://localhost:8545")
 (def rpc-url "https://ropsten.infura.io/qHfzDE5q6dQQ1SR2tW1M")
 
+#_(def expired-term (* 86400 30))
+(def expired-term 500)
+
 (defn generate-web3
   [ks]
   (let [provider  (js/HookedWeb3Provider. (clj->js {:host rpc-url :transaction_signer ks}))
@@ -75,7 +78,8 @@
                     ;; :address "0x9015fe7338a4f2dfa7f066348e8e13b3fbcf51b4"
                     ;; :address "0x84a9241efd3203cc399b3c9c3e6dc75dd1b2d1a4"
                     ;; :address "0x3b0b1b5269d3da33161fec864c6a60ae7c93181e"
-                    :address "0xe146f1c2d557b98b23f7ca339d51e154639dee9e"
+                    ;; :address "0xe146f1c2d557b98b23f7ca339d51e154639dee9e"
+                    :address "0x46ff08c24e9c747e50974a41d8e031a3141e577a"
                     ;; :address  "0x717579347713f18c2e874b2679bb48625626a554"
                     ;; :address  "0xa330C8Ca0e63e95ec56012aF375EDc24999b4c00"
                     }
@@ -128,6 +132,7 @@
                  "customer"
                  (get-item session-storage "type"))
    :payed      false
+   :limit      0
    :registered false
    :put-dealer {:from nil
                 :name nil

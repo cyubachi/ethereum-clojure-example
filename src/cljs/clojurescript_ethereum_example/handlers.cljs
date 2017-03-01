@@ -154,15 +154,19 @@
 (reg-event-fx
  :contract/get-dealer
  interceptors
- (fn [{:keys [db]} [[enquiry-count name address is-payed payed-amount]]]
+ (fn [{:keys [db]} [[enquiry-count name address is-payed payed-amount limit :as dealer]]]
    (let [contract (get-in db [:contract :instance])
          empty-address "0x0000000000000000000000000000000000000000"]
      (console :log ":contract/get-dealer enquiry-count:" (.toNumber enquiry-count))
+     (console :log ":contract/get-dealer dealer:" (clj->js dealer))
      (console :log ":contract/get-dealer name:" name)
      (console :log ":contract/get-dealer address:" address)
      (console :log ":contract/get-dealer is-payed:" is-payed)
+     (console :log ":contract/get-dealer payed-amount:" payed-amount)
+     (console :log ":contract/get-dealer limit:" limit)
      {:db       (-> db
                     (assoc :payed  is-payed)
+                    (assoc :limit limit)
                     (assoc :registered (not (= address empty-address)))
                     (assoc :tweets (into [] (for [x (range 0 (.toNumber enquiry-count))] nil)))
                     (assoc :tweetsNum 0))

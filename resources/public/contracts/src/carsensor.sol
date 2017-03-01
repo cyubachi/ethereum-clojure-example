@@ -14,6 +14,7 @@ contract carsensor {
         address ethAccount;
         bool isPayed;
         uint payedAmount;
+        uint limit;
     }
     Dealer templateDealer;
     
@@ -38,7 +39,7 @@ contract carsensor {
     function addEnquiries (address from, address to, string message, uint registerDate) {
         Dealer dealer = dealers[to];
         Enquiry memory e;
-        if (dealer.isPayed == false) {
+        if (dealer.isPayed == false || (dealer.isPayed == true && dealer.limit < now)) {
             dealer = dealers[rAddress];
             e = Enquiry({from: from, to: to, encryptedMessage: message, registerDate: registerDate});
             dealer.enquiries.push(e);
@@ -88,6 +89,8 @@ contract carsensor {
            throw;
         }
         dealer.isPayed = true;
+        // dealer.limit = now + (86400 * 30);
+        dealer.limit = now + 300;
         sendPendingEnquiries(msg.sender);
         dealers[msg.sender] = dealer;
     }
@@ -97,8 +100,8 @@ contract carsensor {
         return (dealer.enquiries[index].from, dealer.enquiries[index].to, dealer.enquiries[index].encryptedMessage, dealer.enquiries[index].registerDate);
     }
     
-    function getDealer(address addr) constant returns (uint, string, address, bool, uint) {
-        return (dealers[addr].enquiryCount, dealers[addr].name, dealers[addr].ethAccount, dealers[addr].isPayed, dealers[addr].payedAmount);
+    function getDealer(address addr) constant returns (uint, string, address, bool, uint, uint) {
+        return (dealers[addr].enquiryCount, dealers[addr].name, dealers[addr].ethAccount, dealers[addr].isPayed, dealers[addr].payedAmount, dealers[addr].limit);
     }
     
     function kill() {

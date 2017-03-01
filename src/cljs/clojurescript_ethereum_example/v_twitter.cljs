@@ -17,68 +17,71 @@
         my-addresses (subscribe [:db/my-addresses])
         balance      (subscribe [:new-tweet/selected-address-balance])
         payed        (subscribe [:db/payed])
+        limit        (subscribe [:db/limit])
         registered   (subscribe [:db/registered])
         login        (subscribe [:db/login])
         type         (subscribe [:db/type])]
     (fn []
-      [row
-       [col {:xs 12 :sm 12 :md 10 :lg 6 :md-offset 1 :lg-offset 3}
-        [ui/paper {:style {:margin-top "15px"
-                           :padding    20}}
-         [:h2 "Connection"]
-         [ui/text-field {:value               (:name @login)
-                         :disabled            true
-                         :name                "Name"
-                         :floating-label-text "Your name"
-                         :style               {:width "100%"}}]
-         [ui/text-field {:value               (if-not (nil? (:address @new-tweet))
-                                                (:address @new-tweet)
-                                                "")
-                         :disabled            true
-                         :name                "MyAddr"
-                         :floating-label-text "Your account (address)"
-                         :style               {:width "100%"}}]
-         [:br]
-         [:h3 "Balance: " (u/eth @balance)]
-         (if (not (= @type "customer"))
-           [:div
-            [:h3 "Payment status: "
-             (if @payed
-               "paied."
-               [:span {:style {:color       "red"
-                               :font-weight "bold"}} "not paied."])]
-            [:h3 "Register status: "
-             (if @registered
-               "registered."
-               [:span {:style {:color       "red"
-                               :font-weight "bold"}} "not registered."])]])
-         [ui/text-field {:default-value       @caddr
-                         :on-change           #(dispatch [:ui/cAddrUpdate (u/evt-val %)])
-                         :name                "ContractAddr"
-                         :floating-label-text "Where is your contract at?"
-                         :style               {:width "100%"}}]
-         [:br]
-         [ui/raised-button
-          {:secondary    true
-           :label        "Update addr"
-           :style        {:margin-top 15}
-           :on-touch-tap #(dispatch [:contract/abi-loaded @abi])}]
-         (if (not (= @type "customer"))
-           [:span
-            (if (not @registered)
-              [ui/raised-button
-               {:primary      true
-                :label        "Register dealer to blockchain"
-                :style        {:margin-top  15
-                               :margin-left 15}
-                :on-touch-tap #(dispatch [:dealer/register])
-                }])
-            [ui/raised-button
-             {:primary      true
-              :label        "Pay the publication fee"
-              :style        {:margin-top  15
-                             :margin-left 15}
-              :on-touch-tap #(dispatch [:publication-fee/pay])}]])]]])))
+      (let [is-paied (and @payed (< (.getTime (js/Date.)) (* @limit 1000)))]
+        [row
+         [col {:xs 12 :sm 12 :md 10 :lg 6 :md-offset 1 :lg-offset 3}
+          [ui/paper {:style {:margin-top "15px"
+                             :padding    20}}
+           [:h2 "Connection"]
+           [ui/text-field {:value               (:name @login)
+                           :disabled            true
+                           :name                "Name"
+                           :floating-label-text "Your name"
+                           :style               {:width "100%"}}]
+           [ui/text-field {:value               (if-not (nil? (:address @new-tweet))
+                                                  (:address @new-tweet)
+                                                  "")
+                           :disabled            true
+                           :name                "MyAddr"
+                           :floating-label-text "Your account (address)"
+                           :style               {:width "100%"}}]
+           [:br]
+           [:h3 "Balance: " (u/eth @balance)]
+           (if (not (= @type "customer"))
+             [:div
+              [:h3 "Payment status: "
+               (if is-paied
+                 "paied."
+                 [:span {:style {:color       "red"
+                                 :font-weight "bold"}} "not paied."])]
+              [:h3 "Register status: "
+               (if @registered
+                 "registered."
+                 [:span {:style {:color       "red"
+                                 :font-weight "bold"}} "not registered."])]])
+           [ui/text-field {:default-value       @caddr
+                           :on-change           #(dispatch [:ui/cAddrUpdate (u/evt-val %)])
+                           :name                "ContractAddr"
+                           :floating-label-text "Where is your contract at?"
+                           :style               {:width "100%"}}]
+           [:br]
+           [ui/raised-button
+            {:secondary    true
+             :label        "Update addr"
+             :style        {:margin-top 15}
+             :on-touch-tap #(dispatch [:contract/abi-loaded @abi])}]
+           (if (not (= @type "customer"))
+             [:span
+              (if (not @registered)
+                [ui/raised-button
+                 {:primary      true
+                  :label        "Register dealer to blockchain"
+                  :style        {:margin-top  15
+                                 :margin-left 15}
+                  :on-touch-tap #(dispatch [:dealer/register])
+                  }])
+              (if (not is-paied)
+                [ui/raised-button
+                 {:primary      true
+                  :label        "Pay the publication fee"
+                  :style        {:margin-top  15
+                                 :margin-left 15}
+                  :on-touch-tap #(dispatch [:publication-fee/pay])}])])]]]))))
 
 (defn tweets-component []
   (let [tweets  (subscribe [:db/tweets])
