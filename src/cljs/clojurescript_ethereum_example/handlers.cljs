@@ -89,8 +89,11 @@
    (console :log ":dealer/put-dealer gas:" gas)
    (let [from (get-in db [:put-dealer :from])
          name (get-in db [:put-dealer :name])
-         tx   (get-in db [:put-dealer :tx])]
-     {:db db
+         tx   (get-in db [:put-dealer :tx])
+         contract (get-in db[:contract :instance])]
+     (.sendTransaction (.-putDealer contract) from name (clj->js (assoc tx :gas gas)) #(dispatch [:dealer/put-dealer-received %1]))
+     {:db db}
+     #_{:db db
       :web3-fx.contract/state-fn
       {:instance (:instance (:contract db))
        :web3     (:web3 db)
@@ -108,7 +111,7 @@
      (console :log ":dealer/put-dealer-estmate-gas from:" from)
      (console :log ":dealer/put-dealer-estmate-gas name:" name)
      (console :log ":dealer/put-dealer-estmate-gas tx:" (clj->js tx))
-     (.estimateGas (.-putDealer contract) from name tx #(dispatch [:dealer/put-dealer %1 %2]))
+     (.estimateGas (.-putDealer contract) from name (clj->js tx) #(dispatch [:dealer/put-dealer %1 %2]))
      {:db db})))
 
 
@@ -145,10 +148,10 @@
                        :gasPrice (web3-eth/gas-price web3)}
          gas          (+ (web3-eth/estimate-gas web3 tx) 1500000)]
      (console :log ":publication-fee/pay send transaction:" (clj->js (assoc tx :gas gas)))
-     (web3-eth/send-transaction! web3 (assoc tx :gas gas) (fn [err tx]
-                                                            (console :log "err:" err)
-                                                            (console :log "tx:" tx)
-                                                            (dispatch [:reload])))
+     (web3-eth/send-transaction! web3 (clj->js (assoc tx :gas gas)) (fn [err tx]
+                                                                      (console :log "err:" err)
+                                                                      (console :log "tx:" tx)
+                                                                      (dispatch [:reload])))
      {:db db})))
 
 (reg-event-fx
