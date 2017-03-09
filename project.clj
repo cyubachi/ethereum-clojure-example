@@ -35,7 +35,7 @@
                  [com.taoensso/timbre "4.7.4"]
                  [binaryage/dirac "0.8.6"]
                  [hodgepodge "0.1.3"]
-                 [org.web3j/core "1.1.0"]
+                 [org.web3j/core "2.1.0"]
                  [me.raynes/fs "1.4.6"]]
 
   :repositories [["oss.jfrog.org" "http://dl.bintray.com/ethereum/maven"]]

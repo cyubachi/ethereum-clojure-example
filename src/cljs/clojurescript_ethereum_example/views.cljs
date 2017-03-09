@@ -33,7 +33,6 @@
        (if (= @type "admin")
          [ui/menu-item {:onTouchTap #(do
                                        (dispatch [:ui/page 4])
-                                       (dispatch [:ui/send])
                                        (dispatch [:dev/get-users])
                                        (dispatch [:ui/drawer]))} "user list"])
        #_[ui/menu-item {:onTouchTap #(do

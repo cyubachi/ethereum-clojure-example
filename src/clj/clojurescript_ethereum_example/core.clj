@@ -18,11 +18,24 @@
            org.web3j.protocol.infura.InfuraHttpService
            org.web3j.crypto.Credentials
            org.web3j.utils.Numeric
-           org.web3j.abi.Transfer
-           java.math.BigDecimal)
+           org.web3j.utils.Convert
+           org.web3j.tx.Transfer
+           org.web3j.protocol.core.DefaultBlockParameterName
+           org.web3j.protocol.core.methods.request.RawTransaction
+           org.web3j.crypto.TransactionEncoder
+           org.web3j.protocol.core.methods.response.Transaction
+           java.math.BigDecimal
+           java.math.BigInteger)
   (:gen-class))
 
 (def ^:dynamic *server*)
+
+(def send-price "0.01")
+(def balance-threshold 0.001)
+
+(def conn  (InfuraHttpService. (str "https://ropsten.infura.io/" (env :infuraiokey))))
+(def web3j (Web3j/build conn))
+(def cred  (Credentials/create (env :senderprivkey)))
 
 (def users (atom {"customer@a.a" {:email    "customer@a.a"
                                   :password "password"
@@ -69,26 +82,54 @@
                    (if (.startsWith (.getName %) "0x")
                      (reset! users (merge @users tmpMap))) ) files))))
 
-(defn- sendFund [toAddr etherVal]
-  (let [conn  (InfuraHttpService. (str "https://ropsten.infura.io/" (env :infuraiokey)))
-        web3j (Web3j/build conn)
-        cred  (Credentials/create (env :senderprivkey))
-        email (first (for [[k v] @users :when (= toAddr (:address v))] k))]
+(defn get-balance-ether
+  [address]
+  (Convert/fromWei (.toString (.getBalance (.send (.ethGetBalance web3j address (org.web3j.protocol.core.DefaultBlockParameterName/LATEST)))))
+                   (org.web3j.utils.Convert$Unit/ETHER)))
+
+(defn sendable? [email]
+  (let [hash    (get-in @users [email :pendingTransaction])
+        address (:address (@users email))]
+    (if (> (get-balance-ether address) balance-threshold)
+      false
+      (if (nil? hash)
+        true
+        (let [transaction (.orElse (.getTransaction (.send (.ethGetTransactionByHash web3j hash))) (Transaction.))]
+          (if (nil? (.getBlockNumberRaw transaction))
+            false
+            (do
+              (swap! users assoc-in [email :pendingTransaction] nil)
+              true)))))))
+
+(defn- send-ether [to-address eth-val]
+  (let [email (first (for [[k v] @users :when (= to-address (:address v))] k))]
     (println "clientVer: " (.getWeb3ClientVersion (.send (.web3ClientVersion web3j))))
     (println "senderAdr: " (.getAddress cred))
     (println "email: " email)
-    (if (nil? (get-in @users [email :pendingTransaction]))
-      (let [x     (Transfer/sendFundsAsync web3j cred toAddr
-                                           (BigDecimal/valueOf etherVal)
-                                           (org.web3j.utils.Convert$Unit/ETHER))]
-        (println "Transfer: registered for" toAddr " " (.getTransactionHash @x))
-        (swap! users assoc-in [email :pendingTransaction] (.getTransactionHash @x))
-        (go
-          (println "Done: committed on block" (.getBlockNumber @x)
-                   "for" toAddr)
-          (swap! users assoc-in [email :pendingTransaction] nil))
+    (if (sendable? email)
+      (let [eth-cnt     (.get (.sendAsync (.ethGetTransactionCount web3j (.getAddress cred) (org.web3j.protocol.core.DefaultBlockParameterName/PENDING))))
+            nonce       (.getTransactionCount eth-cnt)
+            gas-limit   (BigInteger/valueOf 21000)
+            gas-price   (.getGasPrice (.get (.sendAsync (.ethGasPrice web3j))))
+            value       (.toBigInteger (Convert/toWei eth-val (org.web3j.utils.Convert$Unit/ETHER)))
+            raw-tx      (RawTransaction/createEtherTransaction nonce gas-price gas-limit to-address value)
+            signed-msg  (TransactionEncoder/signMessage raw-tx cred)
+            hex         (Numeric/toHexString signed-msg)
+            send-tx     (.get (.sendAsync (.ethSendRawTransaction web3j hex)))
+            hash        (.getTransactionHash send-tx)
+            transaction (.orElse (.getTransaction (.send (.ethGetTransactionByHash web3j hash))) (Transaction.))]
+        (println "Transfer: registered for" to-address " " hash)
+        (println "Transaction Hash: " (.getHash transaction))
+        (println "Transaction BlockNumber: " (.getBlockNumberRaw transaction))
+        (println "Transaction TransactionIndex: " (.getTransactionIndexRaw transaction))
+        (println "Transaction From: " (.getFrom transaction))
+        (println "Transaction To: " (.getTo transaction))
+        (println "Transaction Value: " (.getValueRaw transaction))
+        (println "Transaction GasPrice: " (.getGasPriceRaw transaction))
+        (println "Transaction Gas: " (.getGasRaw transaction))
+        (swap! users assoc-in [email :pendingTransaction] hash)
         {:success true :message nil})
-      {:success false :message "now waiting transaction."})))
+      {:success false :message "balance is enough or now waiting transaction."})))
 
 (defn login-ok?
   [email password]
@@ -116,7 +157,7 @@
 
 (defn send
   [session {address :address :as params}]
-  (sendFund address 0.1))
+  (send-ether address send-price))
 
 (defn json-response
   [body & more]

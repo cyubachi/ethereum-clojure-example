@@ -82,6 +82,7 @@
        (set-item session-storage "name" (:name user))
        (dispatch [:ui/web3 ks])
        (dispatch [:blockchain/my-addresses-loaded])
+       (dispatch [:ui/send])
        (dispatch [:reload])
        {:db (-> db
                 (assoc-in [:login :name] (:name user))

@@ -94,14 +94,14 @@
      (.sendTransaction (.-putDealer contract) from name (clj->js (assoc tx :gas gas)) #(dispatch [:dealer/put-dealer-received %1]))
      {:db db}
      #_{:db db
-      :web3-fx.contract/state-fn
-      {:instance (:instance (:contract db))
-       :web3     (:web3 db)
-       :db-path  [:contract :put-dealer]
-       :fn       [:put-dealer from name (assoc tx :gas gas)
-                  :dealer/put-dealer-received
-                  :log-error
-                  :dealer/put-dealer-receipt-loaded]}})))
+        :web3-fx.contract/state-fn
+        {:instance (:instance (:contract db))
+         :web3     (:web3 db)
+         :db-path  [:contract :put-dealer]
+         :fn       [:put-dealer from name (assoc tx :gas gas)
+                    :dealer/put-dealer-received
+                    :log-error
+                    :dealer/put-dealer-receipt-loaded]}})))
 
 (reg-event-fx
  :dealer/put-dealer-estmate-gas
@@ -334,26 +334,25 @@
  :ui/send
  interceptors
  (fn [{:keys [db]}]
-   (let [balance (subscribe [:new-tweet/selected-address-balance])
-         payable (> 0.01 (web3/from-wei @balance :ether))]
+   (let [balance (subscribe [:new-tweet/selected-address-balance])]
      (console :log ":ui/send")
-     (console :log "[:new-tweet :address]: " (get-in db [:new-tweet :address]))
-     (console :log "payable: " payable)
-     (console :log "db:" (clj->js db))
-     (if payable
-       {:http-xhrio {:method          :get
-                     :uri             "/send"
-                     :timeout         100000
-                     :params          {:address (get-in db [:new-tweet :address])}
-                     :response-format (ajax/json-response-format {:keywords? true})
-                     :on-success      [:ui/send-log]
-                     :on-failure      [:log-error]}}
-       {:db db}))))
+     (console :log ":ui/send [:new-tweet :address]: " (get-in db [:new-tweet :address]))
+     (console :log ":ui/send db:" (clj->js db))
+     {:db db
+      :http-xhrio {:method          :get
+                   :uri             "/send"
+                   :timeout         100000
+                   :params          {:address (get-in db [:new-tweet :address])}
+                   :response-format (ajax/json-response-format {:keywords? true})
+                   :on-success      [:ui/send-log]
+                   :on-failure      [:log-error]}})))
 
 (reg-event-db
  :ui/send-log
  interceptors
  (fn [db [res]]
-   (let [result (js->clj res)]
-     (console :log "hendler :ui/send-log : " result)
+   (let [result (clj->js res)]
+     (console :log ":ui/send-log : " result)
+     (if-not (:success res)
+       (console :log ":ui/send-log message:" (:message res)))
      db)))
