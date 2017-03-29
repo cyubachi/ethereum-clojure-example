@@ -2,6 +2,7 @@
   :dependencies [[bk/ring-gzip "0.1.1"]
                  [cljs-ajax "0.5.8"
                   :exclusions [commons-codec]]
+                 [camel-snake-kebab "0.4.0"]
                  [cljs-react-material-ui "0.2.22"]
                  [cljs-web3 "0.16.0-0"]
                  [cljsjs/bignumber "2.1.4-1"]
@@ -10,8 +11,8 @@
                  [com.andrewmcveigh/cljs-time "0.4.0"]
                  [compojure "1.6.0-beta1"
                   :exclusions [commons-codec]]
-                 [day8.re-frame/http-fx "0.0.4"]
-                 [environ "1.0.3"]
+                 [day8.re-frame/http-fx "0.0.4" :exclusions [commons-codec]]
+                 [environ "1.1.0"]
                  [http-kit "2.2.0"]
                  [cheshire "5.6.3"]
                  [madvas.re-frame/web3-fx "0.1.0"]
@@ -27,16 +28,24 @@
                  [ring/ring-core "1.6.0-beta5"
                   :exclusions [commons-codec]]
                  [ring/ring-json "0.4.0"]
-                 [ring-transit "0.1.6"]
+                 [ring-transit "0.1.6" :exclusions [commons-codec]]
                  [ring/ring-defaults "0.3.0-beta1"]
                  [ring/ring-devel "1.6.0-beta5"]
                  [ring-logger-timbre "0.7.5"]
                  [com.jakemccrary/reload "0.1.0"]
                  [com.taoensso/timbre "4.7.4"]
-                 [binaryage/dirac "0.8.6"]
+                 [binaryage/dirac "0.8.6" :exclusions [environ]]
                  [hodgepodge "0.1.3"]
-                 [org.web3j/core "2.1.0"]
-                 [me.raynes/fs "1.4.6"]]
+                 [org.web3j/core "2.1.0" :exclusions [com.fasterxml.jackson.core/jackson-core]]
+                 [me.raynes/fs "1.4.6"]
+                 [aleph "0.4.1"]
+                 [cloth "0.3.1" :exclusions [org.iq80.leveldb/leveldb-api
+                                             org.javassist/javassist
+                                             org.clojure/clojure
+                                             commons-codec
+                                             joda-time
+                                             clj-time
+                                             com.google.code.findbugs/jsr305]]]
 
   :repositories [["oss.jfrog.org" "http://dl.bintray.com/ethereum/maven"]]
 
@@ -77,7 +86,8 @@
                    :nrepl-middleware [dirac.nrepl/middleware]
                    :init             (do
                                        (require 'dirac.agent)
-                                       (dirac.agent/boot!))}}
+                                       (dirac.agent/boot!))
+                   :init-ns          user}}
 
    :dev           [:dev-org :dev-overrides]
    :dev-overrides {:env {:api-keys "test"}}
@@ -86,7 +96,7 @@
                    [com.cemerick/piggieback "0.2.1"]
                    [figwheel-sidecar "0.5.8"]
                    [org.clojure/tools.nrepl "0.2.12"]]
-    :plugins      [[lein-figwheel "0.5.8"]
+    :plugins      [[lein-figwheel "0.5.8" :exclusions [org.clojure/clojure]]
                    [lein-environ "1.1.0"]
                    [cider/cider-nrepl "0.15.0-SNAPSHOT"]
                    [refactor-nrepl "2.3.0-SNAPSHOT"]]

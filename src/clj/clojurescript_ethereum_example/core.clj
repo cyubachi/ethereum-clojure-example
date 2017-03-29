@@ -155,7 +155,7 @@
   ;;
   {:success true :user params})
 
-(defn send
+(defn send-api
   [session {address :address :as params}]
   (send-ether address send-price))
 
@@ -178,7 +178,7 @@
   (POST "/login" {session :session params :params} (json-response (login session params)))
   (POST "/register" {session :session params :params} (json-response (register session params)))
 
-  (GET "/send" {session :session params :params} (json-response (send session params)))
+  (GET "/send" {session :session params :params} (json-response (send-api session params)))
 
   ;; DEALER KEY
   (GET "/key/:address" [address];; "/dealers/" isnt dealt with.

@@ -3,6 +3,25 @@
    [clojure.string :as str]
    [hodgepodge.core :refer [session-storage get-item set-item]]
    [cljs-web3.core :as web3-core]))
+(.log js/console "importPrivatekey")
+
+
+(set! (.-importPrivateKey (.-prototype (.-keystore js/lightwallet))) (fn [private-key pw-derived-key hd-string]
+                                                                       (this-as this
+                                                                         (let [priv-key-hex (.toString private-key "hex")
+                                                                               enc-priv-key (._encryptKey (.-keystore js/lightwallet) priv-key-hex pw-derived-key)
+                                                                               key-obj      (clj->js {:privKey    priv-key-hex
+                                                                                                      :encPrivKey enc-priv-key})
+                                                                               address      (._computeAddressFromPrivKey (.-keystore js/lightwallet) (.-privKey key-obj))]
+                                                                           (.addHdDerivationPath this hd-string pw-derived-key (clj->js {:curve "curve25519", :purpose "asymEncrypt"}))
+                                                                           (.log js/console "test")
+                                                                           (doseq [p private-key])
+                                                                           (.generateNewEncryptionKeys this pw-derived-key 1 hd-string)
+                                                                           (.log js/console "test2")
+                                                                           (aset (.-encPrivKeys (aget (.-ksData this) hd-string)) address (.-encPrivKey key-obj))
+                                                                           (.log js/console "pubKeys" (.getPubKeys this hd-string))
+                                                                           #_(.push (.-addresses (aget (.-ksData this) hd-string)) address)
+                                                                           ))))
 
 (def serialized-ks (get-item session-storage "keystore"))
 
@@ -14,6 +33,12 @@
                          (set! (.-passwordProvider ks) #(%1 nil pw))
                          ks)
                        nil))
+
+(defn test-import [private-key]
+  (.keyFromPassword deserialized-ks "password"
+                    (fn [err pw-derived-key]
+                      (.importPrivateKey deserialized-ks private-key pw-derived-key "m/0'/0'/2'"))))
+
 (defn logined?
   []
   (not (nil? deserialized-ks)))
@@ -140,4 +165,3 @@
                 :name nil
                 :tx   nil}
    })
-
