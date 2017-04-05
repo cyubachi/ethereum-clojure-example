@@ -8,20 +8,33 @@
 
 (set! (.-importPrivateKey (.-prototype (.-keystore js/lightwallet))) (fn [private-key pw-derived-key hd-string]
                                                                        (this-as this
-                                                                         (let [priv-key-hex (.toString private-key "hex")
+                                                                         (let [priv-key-hex (.toString (subs private-key 2) "hex")
                                                                                enc-priv-key (._encryptKey (.-keystore js/lightwallet) priv-key-hex pw-derived-key)
                                                                                key-obj      (clj->js {:privKey    priv-key-hex
                                                                                                       :encPrivKey enc-priv-key})
-                                                                               address      (._computeAddressFromPrivKey (.-keystore js/lightwallet) (.-privKey key-obj))]
-                                                                           (.addHdDerivationPath this hd-string pw-derived-key (clj->js {:curve "curve25519", :purpose "asymEncrypt"}))
-                                                                           (.log js/console "test")
-                                                                           (doseq [p private-key])
-                                                                           (.generateNewEncryptionKeys this pw-derived-key 1 hd-string)
-                                                                           (.log js/console "test2")
-                                                                           (aset (.-encPrivKeys (aget (.-ksData this) hd-string)) address (.-encPrivKey key-obj))
-                                                                           (.log js/console "pubKeys" (.getPubKeys this hd-string))
+                                                                               address      (._computeAddressFromPrivKey (.-keystore js/lightwallet) (.-privKey key-obj))
+                                                                               public-key   (._computePubkeyFromPrivKey (.-keystore js/lightwallet) (subs private-key 2) "curve25519")]
+                                                                           (.log js/console "priv-key-hex" priv-key-hex)
+                                                                           (.log js/console "key-obj" public-key)
+                                                                           (.log js/console "address" address)
+                                                                           
+                                                                           #_(.generateNewEncryptionKeys this pw-derived-key 1 hd-string)
+                                                                           (if-not (aget (.-ksData this) hd-string)
+                                                                             (.addHdDerivationPath this hd-string pw-derived-key (clj->js {:curve "curve25519", :purpose "asymEncrypt"})))
+                                                                           #_(if-not (.-dealerPubKeys (aget (.-ksData this) hd-string))
+                                                                             (set! (.-dealerPubKeys (aget (.-ksData this) hd-string)) (clj->js [])))
+                                                                           (aset (.-encPrivKeys (aget (.-ksData this) hd-string)) public-key (.-encPrivKey key-obj))
+                                                                           (.push (.-pubKeys (aget (.-ksData this) hd-string)) public-key) 
                                                                            #_(.push (.-addresses (aget (.-ksData this) hd-string)) address)
                                                                            ))))
+
+(set! (.-getDecryptPubKeys (.-prototype (.-keystore js/lightwallet))) (fn [hd-string]
+                                                                       (this-as this
+                                                                         (if-not (aget (.-ksData this) hd-string)
+                                                                           (clj->js [])
+                                                                           (if-not (.-pubKeys (aget (.-ksData this) hd-string))
+                                                                             (clj->js [])
+                                                                             (.-pubKeys (aget (.-ksData this) hd-string)))))))
 
 (def serialized-ks (get-item session-storage "keystore"))
 

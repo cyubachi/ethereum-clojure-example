@@ -9,12 +9,15 @@
    [cljs-web3.eth :as web3-eth]
    [cljs-web3.personal :as web3-personal]
    [cljsjs.web3]
+   [cljs-time.coerce :as cs]
+   [cljs-time.core :as c]
    [clojurescript-ethereum-example.db :as db]
    [day8.re-frame.http-fx]
    [cljs-react-material-ui.reagent :as ui]
    [goog.string :as gstring]
    [goog.string.format]
    [madvas.re-frame.web3-fx]
+   [hodgepodge.core :refer [session-storage get-item set-item]]
    [re-frame.core :refer [reg-event-db reg-event-fx path trim-v after debug reg-fx console dispatch subscribe]]
    [clojurescript-ethereum-example.utils :as u]
    )
@@ -151,8 +154,63 @@
      (web3-eth/send-transaction! web3 (clj->js (assoc tx :gas gas)) (fn [err tx]
                                                                       (console :log "err:" err)
                                                                       (console :log "tx:" tx)
-                                                                      (dispatch [:reload])))
+                                                                      (dispatch [:publication-fee/get-private-key tx])))
      {:db db})))
+
+
+
+
+
+(reg-event-fx
+ :publication-fee/get-private-key
+ interceptors
+ (fn [{:keys [db]} [tx-hash]]
+   (console :log ":publication-fee/get-private-key tx-hash: " tx-hash)
+   {:http-xhrio {:method          :get
+                 :uri             "/get-private-key"
+                 :params          {:hash tx-hash :email (:email (:login db))}
+                 :timeout         6000
+                 :response-format (ajax/json-response-format {:keywords? true})
+                 :on-success      [:publication-fee/import-private-key]
+                 :on-failure      [:log-error]}}))
+
+
+(reg-event-fx
+ :publication-fee/import-private-key
+ interceptors
+ (fn [{:keys [db]} [private-key]]
+   (let [ks       (:keystore db)
+         password (get-item session-storage "password")]
+     (console :log ":publication-fee/import-private-key ks: " (clj->js ks))
+     (console :log ":publication-fee/import-private-key db: " (clj->js db))
+     (console :log ":publication-fee/import-private-key private-key: " private-key)
+     (.keyFromPassword ks password
+                       (fn [err pw-derived-key]
+                         (.importPrivateKey ks private-key pw-derived-key "m/0'/0'/2'")
+                         (set-item session-storage "keystore" (.serialize ks))
+                         (dispatch [:publication-fee/update-keystore (.serialize ks)])
+                         {:db db})))))
+
+
+(reg-event-fx
+ :publication-fee/update-keystore
+ interceptors
+ (fn [{:keys [db]} [serialized-keystore]]
+   (console :log ":publication-fee/update-keystore serialized-keystore: " serialized-keystore)
+   {:http-xhrio {:method          :post
+                 :uri             "/update-keystore"
+                 :params          {:keystore serialized-keystore :email (get-item session-storage "email")}
+                 :format          (ajax/transit-request-format)
+                 :timeout         6000
+                 :response-format (ajax/json-response-format {:keywords? true})
+                 :on-success      [:reload]
+                 :on-failure      [:log-error]}}))
+
+
+
+
+
+
 
 (reg-event-fx
  :contract/get-dealer

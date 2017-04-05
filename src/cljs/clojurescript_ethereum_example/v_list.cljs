@@ -29,7 +29,7 @@
        [:div {:style {:float "right"}}
         [ui/flat-button {:label        "Submit"
                          :primary      true
-                         :on-touch-tap #(dispatch [:enquiry/send])}]]
+                         :on-touch-tap #(dispatch [:enquiry/send (:dealer @enquiry)])}]]
        [:div {:style {:float "right"}}
         [ui/flat-button {:label        "Close"
                          :primary      false

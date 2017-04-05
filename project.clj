@@ -9,6 +9,7 @@
                  [cljsjs/react-flexbox-grid "0.10.2-1"
                   :exclusions [cljsjs/react]]
                  [com.andrewmcveigh/cljs-time "0.4.0"]
+                 [clj-time "0.13.0"]
                  [compojure "1.6.0-beta1"
                   :exclusions [commons-codec]]
                  [day8.re-frame/http-fx "0.0.4" :exclusions [commons-codec]]
@@ -34,7 +35,7 @@
                  [ring-logger-timbre "0.7.5"]
                  [com.jakemccrary/reload "0.1.0"]
                  [com.taoensso/timbre "4.7.4"]
-                 [binaryage/dirac "0.8.6" :exclusions [environ]]
+                 [binaryage/dirac "1.2.3" :exclusions [environ]]
                  [hodgepodge "0.1.3"]
                  [org.web3j/core "2.1.0" :exclusions [com.fasterxml.jackson.core/jackson-core]]
                  [me.raynes/fs "1.4.6"]

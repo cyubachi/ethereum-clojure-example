@@ -51,16 +51,16 @@
  interceptors
  (fn [db [index result]]
    (let [keystore        (:keystore db)
-         hd-path         "m/0'/0'/1'"
+         hd-path         "m/0'/0'/2'"
          encryption      (.-encryption js/lightwallet)
-         dealer-pubkey   (first (.getPubKeys keystore hd-path))
+         dealer-pubkeys  (.getDecryptPubKeys keystore hd-path)
          customer-pubkey (:pubkey result)
          message         (:message (nth (:tweets db) index))
          password        (get-item session-storage "password")]
      (console :log ":decrypt-customer-message db:" (clj->js db))
      (console :log ":decrypt-customer-message index:" (clj->js index))
      (console :log ":decrypt-customer-message result:" (clj->js result))
-     (console :log ":decrypt-customer-message dealer-pubkey:" (clj->js dealer-pubkey))
+     (console :log ":decrypt-customer-message dealer-pubkey:" (clj->js dealer-pubkeys))
      (console :log ":decrypt-customer-message customer-pubkey:" (clj->js customer-pubkey))
      (console :log ":decrypt-customer-message message:" (clj->js (.parse js/JSON (js/atob message))))
      (console :log ":decrypt-customer-message password:" password)
@@ -68,18 +68,19 @@
                        (fn [err pw-derived-key]
                          (if-not (nil? err)
                            (throw err))
-                         (let [decrypted-message (.multiDecryptString encryption keystore
-                                                                      pw-derived-key
-                                                                      (clj->js (.parse js/JSON (js/atob message)))
-                                                                      customer-pubkey
-                                                                      dealer-pubkey
-                                                                      hd-path)]
-                           (console :log "decrypted message:" decrypted-message)
-                           (if-not (false? decrypted-message)
-                             (do
-                               (console :log "quoted decrypted message:" (reader/read-string decrypted-message))
-                               (dispatch [:update-decrypted-message index decrypted-message]))
-                             (console :log "tweets[" index "]: cannot decrypt message.")))))
+                         (doseq [pubkey dealer-pubkeys]
+                           (let [decrypted-message (.multiDecryptString encryption keystore
+                                                                        pw-derived-key
+                                                                        (clj->js (.parse js/JSON (js/atob message)))
+                                                                        customer-pubkey
+                                                                        pubkey
+                                                                        hd-path)]
+                             (console :log "decrypted message:" decrypted-message)
+                             (if-not (false? decrypted-message)
+                               (do
+                                 (console :log "quoted decrypted message:" (reader/read-string decrypted-message))
+                                 (dispatch [:update-decrypted-message index decrypted-message]))
+                               (console :log "tweets[" index "]: cannot decrypt message."))))))
      db)))
 
 (reg-event-db

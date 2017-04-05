@@ -9,11 +9,14 @@
             [ring.middleware.json :refer [wrap-json-params]]
             [ring.middleware.transit :refer [wrap-transit-params]]
             [com.jakemccrary.middleware.reload :as reload]
+            [clj-time.core :as c]
+            [clj-time.coerce :as cr]
             [ring.logger.timbre :as logger.timbre]
             [environ.core :refer [env]]
             [cheshire.core :as json]
             [org.httpkit.server :refer [run-server]]
-            [me.raynes.fs :as fs])
+            [me.raynes.fs :as fs]
+            [cloth.keys :as k])
   (:import org.web3j.protocol.Web3j
            org.web3j.protocol.infura.InfuraHttpService
            org.web3j.crypto.Credentials
@@ -65,6 +68,64 @@
                                   :type     "dealer",
                                   :name     "dealer2",
                                   :address  "0x4829028a81a3379074cd72cb2bb598339a5dc71c"}}))
+
+
+(defn get-user-from-address [address]
+  (second (first (filter #(= address (:address (second %1))) @users))))
+
+(defn generate-private-key
+  [{dealer-address :dealer-address expired :expired}]
+  (let [user  (get-user-from-address dealer-address)
+        email (:email user)
+        now   (cr/to-long (c/now))
+        expire (+ now 300000)]
+    (println now)
+    (println (str "dealer-address: " dealer-address))
+    (println (:private-key-expire user))
+    (cond
+      (and (nil? (:private-key-expire user)) (nil? (:private-key user)))              (let [private-key (:private-key (k/create-keypair))]
+                                                                                        (println "both nil.")
+                                                                                        (swap! users assoc-in [email :private-key] private-key)
+                                                                                        private-key)
+      (and (not (nil? (:private-key-expire user)))
+           (and (< (:private-key-expire user) now) (not (nil? (:private-key user))))) (let [private-key (:private-key (k/create-keypair))]
+                                                                                        (println "expire over.")
+                                                                                        (swap! users assoc-in [email :private-key] private-key)
+                                                                                        (swap! users assoc-in [email :private-key-expire] nil)
+                                                                                        private-key)
+      :else                                                                           (:private-key user))))
+#_{:private-key "0xf7324b22730a5ad5202bd056ffdabac67fdbb1d8b21407819b8c507fafac24cd", :address "0xfb786196af2cf2333e3c1268e01cd7b8c2c4d649"}
+
+
+(defn update-private-key-expire
+  [email]
+  (let [now   (cr/to-long (c/now))
+        expire (+ now 300000)]
+    (swap! users assoc-in [email :private-key-expire] expire)))
+
+(defn get-private-key
+  [{tx-hash :hash} session]
+  (let [transaction (.orElse (.getTransaction (.send (.ethGetTransactionByHash web3j tx-hash))) (Transaction.))]
+    (when-not (nil? transaction)
+      (let [user (get-user-from-address (.getFrom transaction))
+            private-key (:private-key user)]
+        (println (str "tx-hash: " tx-hash))
+        (println (str "private-key: " private-key))
+        (println (str "transaction: " transaction))
+        (println (str "From: " (.getFrom transaction)))
+        (println (str "To: " (.getTo transaction)))
+        (println (str "Value: " (.getValue transaction)))
+        (when (and
+               (= (.getTo transaction) "0x46ff08c24e9c747e50974a41d8e031a3141e577a")
+               (and
+                (= (.getFrom transaction) (:address user))
+                (= (.getValue transaction) 10000000000000000)))
+          (do
+            (generate-private-key {:dealer-address (:address user)})
+            (update-private-key-expire (:email user))
+            (println (str "user: " user))
+            (println (str "private-key: " (:private-key (get-user-from-address (.getFrom transaction)))))
+            (:private-key (get-user-from-address (.getFrom transaction)))))))))
 
 ;;
 (defn- write-users-to-file [checkfn folder email params]
@@ -131,6 +192,17 @@
         {:success true :message nil})
       {:success false :message "balance is enough or now waiting transaction."})))
 
+(defn json-response
+  [body & more]
+  (let [response {:status  200
+                  :headers {"Content-Type" "text/html; charset=utf-8"}
+                  :body    (json/generate-string body)}
+        session  (first more)]
+    (if-not (nil? session)
+      (assoc response :session session)
+      response)))
+
+
 (defn login-ok?
   [email password]
   (if (and (not (nil? (@users email)))
@@ -140,8 +212,8 @@
 
 (defn login [session {email :email password :password  :as params}]
   (if (login-ok? email password)
-    {:success true :user (@users email)}
-    {:success false}))
+    (json-response {:success true :user (@users email)} (assoc session :email email))
+    (json-response {:success false})))
 
 (defn reg-keystore
   [session {email :email keystore :keystore}]
@@ -159,15 +231,6 @@
   [session {address :address :as params}]
   (send-ether address send-price))
 
-(defn json-response
-  [body & more]
-  (let [response {:status  200
-                  :headers {"Content-Type" "text/html; charset=utf-8"}
-                  :body    (json/generate-string body)}
-        session  (first more)]
-    (if-not (nil? session)
-      (assoc response :session session)
-      response)))
 
 (defroutes routes
 
@@ -175,11 +238,12 @@
 
   (resources "/images/" {:root "images"})
 
-  (POST "/login" {session :session params :params} (json-response (login session params)))
+  (POST "/login" {session :session params :params} (login session params))
   (POST "/register" {session :session params :params} (json-response (register session params)))
-
+  (POST "/update-keystore" {session :session params :params} (json-response (reg-keystore session params)))
   (GET "/send" {session :session params :params} (json-response (send-api session params)))
-
+  (POST "/generate-private-key" {params :params} (json-response (generate-private-key params)))
+  (GET "/get-private-key" {params :params session :session} (json-response (get-private-key params session)))
   ;; DEALER KEY
   (GET "/key/:address" [address];; "/dealers/" isnt dealt with.
        (println "id:" address)

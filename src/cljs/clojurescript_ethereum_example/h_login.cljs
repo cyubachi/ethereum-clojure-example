@@ -80,6 +80,7 @@
        (set-item session-storage "password" (:password login))
        (set-item session-storage "type" (:type user))
        (set-item session-storage "name" (:name user))
+       (set-item session-storage "email" (:email login))
        (dispatch [:ui/web3 ks])
        (dispatch [:blockchain/my-addresses-loaded])
        (dispatch [:ui/send])
