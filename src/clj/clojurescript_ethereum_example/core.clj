@@ -207,9 +207,9 @@
        {:status  200
         :headers {"Content-Type" "text/html; charset=utf-8"}
         :body    (json/generate-string
-                  (if (= 0 (count (filter #(= address (:address %)) (vals @users))))
+                  (if (nil? (get-user-from-address address))
                     {}
-                    (dissoc (first (filter #(= address (:address %)) (vals @users))) :keystore)))})
+                    (dissoc (get-user-from-address address) :keystore)))})
 
   ;; DEALER INFO
   (GET "/dealers/:address" [address];; "/dealers/" isnt dealt with.
@@ -217,9 +217,9 @@
        {:status  200
         :headers {"Content-Type" "text/html; charset=utf-8"}
         :body    (json/generate-string
-                  (if (= 0 (count (filter #(= address (:address %)) (vals @users))))
+                  (if (nil? (get-user-from-address address))
                     {}
-                    (dissoc (first (filter #(= address (:address %)) (vals @users))) :keystore)))})
+                    (dissoc (get-user-from-address address) :keystore)))})
 
   (GET "/users/" []
        (println "users: all")
