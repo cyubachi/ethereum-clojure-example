@@ -150,7 +150,6 @@
      (.generateNewEncryptionKeys ks pw-derived-key 1 encrypt-hd-path)
      (console :log ":ui/register-init-keystore keystore addresses:" (.getAddresses ks))
      (console :log ":ui/register-init-keystore serialized keystore:" (.serialize ks))
-     (console :log ":ui/register-init-keystore public key:" (first (.getPubKeys ks encrypt-hd-path)))
      (set! (.-passwordProvider ks) enter-password)
      {:db         db
       :http-xhrio {:method          :post
@@ -160,7 +159,6 @@
                    :params          {:email    (:email login)
                                      :password (:password login)
                                      :keystore (.serialize ks)
-                                     :pubkey   (first (.getPubKeys ks "m/0'/0'/1'"))
                                      :type     (:register-type db)
                                      :name     (first (clojure.string/split (:email login) "@"))
                                      :address  (str "0x" (first (.getAddresses ks)))}

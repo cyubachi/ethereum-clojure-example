@@ -5,6 +5,8 @@
                  [camel-snake-kebab "0.4.0"]
                  [cljs-react-material-ui "0.2.22"]
                  [cljs-web3 "0.16.0-0"]
+                 [org.clojure/java.jdbc "0.7.0-alpha3"]
+                 [org.xerial/sqlite-jdbc "3.8.6"]
                  [cljsjs/bignumber "2.1.4-1"]
                  [cljsjs/react-flexbox-grid "0.10.2-1"
                   :exclusions [cljsjs/react]]
