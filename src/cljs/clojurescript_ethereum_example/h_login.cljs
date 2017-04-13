@@ -160,6 +160,7 @@
                                      :password (:password login)
                                      :keystore (.serialize ks)
                                      :type     (:register-type db)
+                                     :pubkey   (first (.getPubKeys ks "m/0'/0'/1'"))
                                      :name     (first (clojure.string/split (:email login) "@"))
                                      :address  (str "0x" (first (.getAddresses ks)))}
                    :response-format (ajax/json-response-format {:keywords? true})
