@@ -53,7 +53,7 @@
   :repositories [["oss.jfrog.org" "http://dl.bintray.com/ethereum/maven"]]
 
   :plugins [[lein-auto "0.1.2"]
-            [lein-cljsbuild "1.1.4" ]
+            [lein-cljsbuild "1.1.4"]
             [lein-shell "0.5.0"]
             [deraen/lein-less4j "0.5.0"]]
 
@@ -98,7 +98,7 @@
    {:dependencies [[binaryage/devtools "0.8.2"]
                    [com.cemerick/piggieback "0.2.1"]
                    [figwheel-sidecar "0.5.8"]
-                   [org.clojure/tools.nrepl "0.2.12"]]
+                   [org.clojure/tools.nrepl "0.2.13"]]
     :plugins      [[lein-figwheel "0.5.8" :exclusions [org.clojure/clojure]]
                    [lein-environ "1.1.0"]
                    [cider/cider-nrepl "0.15.0-SNAPSHOT"]

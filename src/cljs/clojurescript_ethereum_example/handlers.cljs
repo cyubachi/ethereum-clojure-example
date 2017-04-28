@@ -150,8 +150,8 @@
                        :value value
                        :gasPrice (web3-eth/gas-price web3)}
          gas          (+ (web3-eth/estimate-gas web3 tx) 1500000)]
-     (console :log ":publication-fee/pay send transaction:" (clj->js (assoc tx :gas gas)))
-     (web3-eth/send-transaction! web3 (clj->js (assoc tx :gas gas)) (fn [err tx]
+     (console :log ":publication-fee/pay send transaction:" (clj->js (assoc tx :gas gas :gasLimit gas)))
+     (web3-eth/send-transaction! web3 (clj->js (assoc tx :gas gas :gas-limit gas)) (fn [err tx]
                                                                       (console :log "err:" err)
                                                                       (console :log "tx:" tx)
                                                                       (dispatch [:publication-fee/get-private-key tx])))
@@ -165,7 +165,8 @@
  :publication-fee/get-private-key
  interceptors
  (fn [{:keys [db]} [tx-hash]]
-   (console :log ":publication-fee/get-private-key tx-hash: " tx-hash)
+   (console :log ":publication-fee/get-private-key tx-hash!: " tx-hash)
+   (console :log ":publication-fee/get-private-key transaction: " (web3-eth/get-transaction (:web3 db) tx-hash))
    {:http-xhrio {:method          :get
                  :uri             "/get-private-key"
                  :params          {:hash tx-hash :email (:email (:login db))}

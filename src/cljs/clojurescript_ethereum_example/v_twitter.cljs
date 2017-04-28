@@ -22,7 +22,7 @@
         login        (subscribe [:db/login])
         type         (subscribe [:db/type])]
     (fn []
-      (let [is-paied (and @payed (< (.getTime (js/Date.)) (* @limit 1000)))]
+      (let [is-paid (and @payed (< (.getTime (js/Date.)) (* @limit 1000)))]
         [row
          [col {:xs 12 :sm 12 :md 10 :lg 6 :md-offset 1 :lg-offset 3}
           [ui/paper {:style {:margin-top "15px"
@@ -45,10 +45,10 @@
            (if (not (= @type "customer"))
              [:div
               [:h3 "Payment status: "
-               (if is-paied
-                 "paied."
+               (if is-paid
+                 "paid."
                  [:span {:style {:color       "red"
-                                 :font-weight "bold"}} "not paied."])]
+                                 :font-weight "bold"}} "not paid."])]
               [:h3 "Register status: "
                (if @registered
                  "registered."
@@ -75,7 +75,7 @@
                                  :margin-left 15}
                   :on-touch-tap #(dispatch [:dealer/register])
                   }])
-              (if (not is-paied)
+              (if (not is-paid)
                 [ui/raised-button
                  {:primary      true
                   :label        "Pay the publication fee"

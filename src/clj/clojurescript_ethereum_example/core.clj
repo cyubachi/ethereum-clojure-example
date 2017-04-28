@@ -79,9 +79,28 @@
         expire (+ now 300000)]
     (sql/update! db-spec :users {:private_key_expire expire} ["email = ?" email])))
 
+(defn retry [tries f & args]
+  (Thread/sleep 1000)
+  (let [res (try {:value (apply f args)}
+                 (catch Exception e
+                   (if (= 0 tries)
+                     (throw e)
+                     {:exception e})))]
+    (if (:exception res)
+      (recur (dec tries) f args)
+      (:value res))))
+
+(defn get-transaction
+  [hash]
+  (let [t (.orElse (.getTransaction (.send (.ethGetTransactionByHash web3j hash))) (Transaction.))]
+    (if (nil? (.getFrom t))
+      (throw (RuntimeException. "transaction is empty."))
+      t)))
+
+
 (defn get-private-key
   [{tx-hash :hash} session]
-  (let [transaction (.orElse (.getTransaction (.send (.ethGetTransactionByHash web3j tx-hash))) (Transaction.))]
+  (let [transaction (retry 20 get-transaction tx-hash)]
     (when-not (nil? transaction)
       (let [user (get-user-from-address (.getFrom transaction))
             private-key (:private_key user)]
@@ -90,9 +109,9 @@
         (println (str "transaction: " transaction))
         (println (str "From: " (.getFrom transaction)))
         (println (str "To: " (.getTo transaction)))
-        (println (str "Value: " (.getValue transaction)))
+        ;; (println (str "Value: " (.getValue transaction)))
         (when (and
-               (= (.getTo transaction) "0x46ff08c24e9c747e50974a41d8e031a3141e577a")
+               (= (.getTo transaction) "0x3eb148cbce78726143b0fc437e4482d7ccb98165")
                (and
                 (= (.getFrom transaction) (:address user))
                 (= (.getValue transaction) 10000000000000000)))

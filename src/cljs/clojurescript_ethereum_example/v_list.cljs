@@ -39,27 +39,36 @@
   (let [cars (subscribe [:db/cars])]
     (fn []
       [row
-       [col {:xs 12 :sm 12 :md 10 :lg 6 :md-offset 1 :lg-offset 3}
+       [col {:xs 12 :sm 12 :md 10 :lg 8 :md-offset 1 :lg-offset 2}
         [ui/paper {:style {:padding 20 :margin-top 15}}
          [:h1 "Cars"]
          (for [{:keys [id name price image dealer]} @cars]
-           [:div {:style {:margin-top 20
-                          :height     120
-                          :font-size  "0.8em"}
+           [:div {:style {:padding    10
+                          :border-bottom "1px solid #EEE"}
                   :key   id}
-            [:img {:src    image
-                   :height 110}]
-            [ui/raised-button
-             {:secondary    true
-              :label        "Enquiry"
-              :style        {:margin-top 15
-                             :float      "right"}
-              :on-touch-tap #(dispatch [:ui/enquiry id name price dealer])
-              }]
-            [:div {:style {:float         "right"
-                           :padding-right 80}}
+            [:div {:style {:width   "20%"
+                           :display "inline-block"
+                           :vertical-align "middle"
+                           :text-align "center"
+                           }}
+             [:img {:src    image
+                    :height 110}]]
+
+            [:div {:style {:width   "65%"
+                           :display "inline-block"
+                           :vertical-align "middle"
+                           :padding "0 20px"
+                           :font-size "0.9em"}}
              [:h3 "CAR_ID: " id]
              [:h3 "CAR_NAME: " name]
              [:h3 "PRICE: " price]
              [:h3 "DEALER: " dealer]]
-            [ui/divider]])]]])))
+            [:div {:style {:width "10%"
+                           :display "inline-block"
+                           :text-align "center"
+                           :vertical-align "middle"}}
+             [ui/raised-button
+              {:secondary    true
+               :label        "Enquiry"
+               :on-touch-tap #(dispatch [:ui/enquiry id name price dealer])}]]
+            ])]]])))
